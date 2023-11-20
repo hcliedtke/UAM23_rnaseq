@@ -1,4 +1,4 @@
-# Principals of Evolution 2023 - Transcriptomics of phenotypic plasticity 
+# Studying Gene Expression Underlying Plastic Phenotypes
 
-### Access course website [here](https://hcliedtke.github.io/PoE23_rnaseq/).
+### Access course website [here](https://hcliedtke.github.io/UAM23_rnaseq/).
 
