@@ -10,7 +10,7 @@
 
 
 
-<meta name="date" content="2023-03-27" />
+<meta name="date" content="2023-12-08" />
 
 <title>Differential Gene Expression</title>
 
@@ -254,25 +254,68 @@ if (window.hljs) {
 
 
 <style type="text/css">:root {
---pink: #983E82; 
---orange: #E2A458; 
---yellow: #F5DC70; 
---green: #59935B; 
---blue: #467AAC; 
---purple: #61589C; 
+--incorrect: #983E82;
+--incorrect_alpha: #edaddd;
+--correct: #59935B;
+--correct_alpha: #c0edc2;
+--highlight: #467AAC;
+}
+.webex-check {}
+.webex-box {
+border: 2px solid var(--highlight);
+padding: 0.5em 0.25em;
+margin: 1em 0;
+border-radius: .25em;
+background-color: rgba(127, 127, 127, 0.05);
+}
+.webex-total_correct {
+margin-left: 1em;
+}
+.unchecked .webex-total_correct {
+display: none;
+}
+.unchecked .webex-incorrect,
+.unchecked .webex-correct {
+border: 2px dotted grey !important;
+background-color: white !important;
 }
 
+.webex-select, input.webex-solveme,
+.unchecked .webex-radiogroup label.webex-incorrect,
+.unchecked .webex-radiogroup label.webex-correct{
+border: 2px dotted grey;
+background-color: white;
+border-radius: 0.25em;
+}
 .webex-incorrect,
-.webex-radiogroup label.webex-incorrect{
-border: 2px dotted var(--pink);
-background-color: #edaddd;
+input.webex-solveme.webex-incorrect,
+.webex-radiogroup label.webex-incorrect {
+border: 2px dotted var(--incorrect);
+background-color: var(--incorrect_alpha);
+color: black;
 border-radius: 0.25em;
 }
 .webex-correct,
+input.webex-solveme.webex-correct,
 .webex-radiogroup label.webex-correct {
-border: 2px solid var(--green);
-background-color: #c0edc2;
+border: 2px solid var(--correct);
+background-color: var(--correct_alpha);
+color: black;
 border-radius: 0.25em;
+}
+.unchecked .webex-incorrect span::before,
+.unchecked .webex-incorrect + .webex-icon::after,
+.unchecked .webex-correct span::before,
+.unchecked .webex-correct + .webex-icon::after {
+content: " ";
+}
+.webex-incorrect span::before,
+.webex-incorrect + .webex-icon::after {
+content: "\274C ";
+}
+.webex-correct span::before,
+.webex-correct + .webex-icon::after {
+content: "\2705 ";
 }
 
 .webex-solution {
@@ -283,19 +326,19 @@ margin-bottom: 10px;
 }
 .webex-solution.open {
 height: auto;
-border: 2px solid var(--blue);
+border: 2px solid var(--highlight);
 border-radius: 5px;
 }
-.webex-solution button {
+.webex-solution button, .webex-check-button {
 height: 2em;
 margin-bottom: 0.5em;
 border-radius: 0.5em;
-background-color: var(--blue);
+background-color: var(--highlight);
 color: white;
 padding: 0 0.5em;
 }
 .webex-solution pre.sourceCode {
-border-color: var(--green);
+border-color: var(--correct);
 }
 .webex-radiogroup label {
 margin-left: 2em;
@@ -303,12 +346,16 @@ text-indent: -1em;
 padding-left: 0.5em;
 font-weight: 400;
 display: block;
-border: 2px solid rgba(255, 255, 255, 1);
+border: 2px solid rgba(255, 255, 255, 0);
+background-color: inherit;
 border-radius: 0.25em;
 }
 .webex-radiogroup label input {
 position: relative;
 left: -1em;
+}
+.webex-radiogroup {
+margin: 1em 0;
 }
 </style>
 
@@ -408,10 +455,11 @@ display: none;
 
 
 <h1 class="title toc-ignore">Differential Gene Expression</h1>
-<h3 class="subtitle"><p>PoE23: Principles of Evolution</p></h3>
+<h3 class="subtitle"><p>UAM23: New Technologies for Developmental
+Evolutionary Biology Studies</p></h3>
 <h4 class="author">H. Christoph Liedtke</h4>
 <address class="author_afil">
-Estación Biológica de Doñana<br><h4 class="date">2023-03-27</h4>
+Estación Biológica de Doñana<br><h4 class="date">2023-12-08</h4>
 
 </div>
 
@@ -420,14 +468,13 @@ Estación Biológica de Doñana<br><h4 class="date">2023-03-27</h4>
 <h4>Prepare environment</h4>
 <p>Set your working directory and load the libraries we will need.</p>
 <pre class="r"><code># set working directory
-#setwd(&quot;~/Documents/git_projects/PoE23/&quot;)
-setwd(&quot;~/Documents/teaching/principals_of_evolution23/PoE23_rnaseq/&quot;)
+setwd(&quot;~/Documents/git_projects/UAM23_rnaseq/&quot;)
 
 # install pacman if not already installed
 if (!require(&quot;pacman&quot;)) install.packages(&quot;pacman&quot;)
 
 # use pacman to load libraries
-pacman::p_load(tidyverse, DESeq2,viridis,scales)</code></pre>
+pacman::p_load(tidyverse,DESeq2,viridis,scales)</code></pre>
 </div>
 <div id="background" class="section level2">
 <h2>Background</h2>
@@ -523,9 +570,13 @@ example, the <code>dds</code> object we created, has two assays:
 with <code>assays()</code> function (note: different from
 <code>assay()</code>), or specific functions for specific assays (if
 these are available)</p>
-<pre class="r"><code>names(assays(dds)) # list the stored assays
-assays(dds)[[&quot;counts&quot;]] %&gt;% head() # uses assays() function with typical indexing operators to get e.g. the counts 
-counts(dds) %&gt;% head() # uses counts() function to specifically extract the counts</code></pre>
+<pre class="r"><code># see what assays are stored in the object:
+assayNames(dds)
+# call a specific assay by name
+assay(dds, &quot;counts&quot;) %&gt;% head()
+assay(dds, &quot;avgTxLength&quot;) %&gt;% head()
+# call a specific assay with a specific function
+counts(dds) %&gt;% head()</code></pre>
 <p>We can also access information about the columns:</p>
 <pre class="r"><code>colData(dds)</code></pre>
 <p>In this case, this is the experimental information we provided with
@@ -544,18 +595,17 @@ dds object compared to the raw count data we imported?</p>
 <button>
 Show Answer
 </button>
+<p>The decimal counts have been rounded off to make them integers.</p>
 <pre class="r"><code>head(counts(dds))
 head(txi$counts)</code></pre>
-<p>One of the The decimal counts have been rounded off to make them
-integers.</p>
 </div>
 </div>
 <div id="pre-filtering" class="section level2">
 <h2>Pre-filtering</h2>
-<p>You may have seen that in some workflows or examples, people filter
-out genes that have generally very low counts, or even filters whose
-counts don&#39;t vary very much across samples. In theory, this is not
-necessary with DESeq2 as it will handle this on the fly (read more <a href="http://bioconductor.org/packages/devel/bioc/vignettes/DESeq2/inst/doc/DESeq2.html#pre-filtering">here</a>),
+<p>You may have seen that some workflows filter out genes that have very
+low counts, orwhose counts don&#39;t vary very much across samples. In
+theory, this is not necessary with DESeq2 as it will handle this on the
+fly (read more <a href="http://bioconductor.org/packages/devel/bioc/vignettes/DESeq2/inst/doc/DESeq2.html#pre-filtering">here</a>),
 but reducing the size of the matrix can greatly speeding up downstream
 calculations and reduce the memory requirements.</p>
 <p>As we saw in the previous exercise, there are many liver-specific
@@ -569,10 +619,10 @@ dds &lt;- dds[rowSums(counts(dds)) &gt;= 10,]</code></pre>
 <h2>Differential Expression Analysis</h2>
 <p>The ultimate goal of running such an analysis is to see if a given
 gene is expressed to a different degree in one condition vs. another
-condition. This sounds almost like a T-test kind of problem, but things
-are not that simple. In this exercise, I don&#39;t want to focus too much on
-the theory, but it might be worthwhile to refresh ourselves what some of
-the &quot;problematic&quot; features of the data are:</p>
+condition. This sounds almost like a T-test, but things are not that
+simple. In this exercise, I don&#39;t want to focus too much on theory, but
+it is worth talking about what some of the &quot;problematic&quot; features are of
+the data:</p>
 <ul>
 <li>Many counts are low, or even zero.</li>
 <li>RNAseq data tends to exhibit overdispersion: the variance is much
@@ -669,7 +719,7 @@ the following information:</p>
 </ol>
 <ul>
 <li>baseMean: mean of normalized counts for all samples divided by size
-factor</li>
+factor (note: it does not take into account gene length).</li>
 <li>log2FoldChange: The effect size estimate. This value indicates how
 much the gene or transcript&#39;s expression seems to have changed between
 the comparison and control groups. This value is reported on a
@@ -697,7 +747,10 @@ a low mean normalized count, then only the adjusted p value will be set
 to NA. Description and customization of independent filtering is
 described below&quot;.</p>
 <p>Let&#39;s check some of those counts with <code>NA</code> padj:</p>
-<pre class="r"><code>counts(dds)[rownames(res)[is.na(res$padj)],] %&gt;% head(15)</code></pre>
+<pre class="r"><code>counts(dds) %&gt;%
+  as.data.frame() %&gt;%
+  filter(is.na(res$padj)) %&gt;%
+  head()</code></pre>
 <p>Indeed! all have very low counts!! they are therefore unreliable, and
 should rightfully not be included in the results.</p>
 </div>
@@ -755,10 +808,10 @@ against the log fold change, with a canned plotting function from the
 <code>DESeq2</code> package.</p>
 <pre class="r"><code>par(mfrow=c(2,2))
 # single plot
-DESeq2::plotMA(res_wD_wV)
-DESeq2::plotMA(res_bD_bV)
-DESeq2::plotMA(res_bD_wD)
-DESeq2::plotMA(res_bV_wV)
+DESeq2::plotMA(res_wD_wV, main=&quot;White Dorsals vs. Ventral&quot;)
+DESeq2::plotMA(res_bD_bV, main=&quot;Black Dorsals vs. Ventral&quot;)
+DESeq2::plotMA(res_bD_wD, main=&quot;Black Dorsals vs. White Dorsal&quot;)
+DESeq2::plotMA(res_bV_wV, main=&quot;Black Ventral vs. White Ventral&quot;)
 par(mfrow=c(1,1))</code></pre>
 <blockquote>
 <p><em>Question:</em> Have you seen this kind of plot before? What can
@@ -773,7 +826,7 @@ Show Answer
 count contain sufficient information to be significant</li>
 <li>The same as from the summary() function:
 <ul>
-<li>Dorsal-ventral comparisons result in more differentially expressed
+<li>Dorsal-ventral comparisons result in more differential expressed
 genes (DEGs), than black-white comparisons?</li>
 <li>DEGs are more or less evenly up (positive fold changes) and down
 (negative fold changes) regulated for each comparison</li>
@@ -813,7 +866,8 @@ dir.create(&quot;results&quot;, showWarnings = FALSE)
 write.csv(as.data.frame(res_wD_wV), &quot;./results/deseq2_res_wD_wV.csv&quot;)
 
 # but for convenience, we can export them all as a list object and save it as an .rds file
-saveRDS(list(bD_bV = res_bD_bV,
+saveRDS(list(
+          bD_bV = res_bD_bV,
           wD_wV = res_wD_wV,
           bV_wV = res_bV_wV,
           bD_wD = res_bD_wD),
@@ -836,10 +890,10 @@ p-values (i.e. a rectangular plot with a peak near 0).</p>
 <pre class="r"><code># for all comparisons:
 par(mfrow=c(2,2))
 par(mar=c(4,4,1,1))
-hist(res_wD_wV$pvalue, breaks=50, col=&quot;grey&quot;, main=&quot;&quot;)
-hist(res_bD_bV$pvalue, breaks=50, col=&quot;grey&quot;, main=&quot;&quot;)
-hist(res_bD_wD$pvalue, breaks=50, col=&quot;grey&quot;, main=&quot;&quot;)
-hist(res_bV_wV$pvalue, breaks=50, col=&quot;grey&quot;, main=&quot;&quot;)
+hist(res_wD_wV$pvalue, breaks=50, col=&quot;grey&quot;, main=&quot;wD_wV&quot;)
+hist(res_bD_bV$pvalue, breaks=50, col=&quot;grey&quot;, main=&quot;_bD_bV&quot;)
+hist(res_bD_wD$pvalue, breaks=50, col=&quot;grey&quot;, main=&quot;bD_wD&quot;)
+hist(res_bV_wV$pvalue, breaks=50, col=&quot;grey&quot;, main=&quot;bV_wV&quot;)
 par(mfrow=c(1,1))</code></pre>
 <p>All-in-all, not bad. In all cases, we see the expected &quot;enrichment&quot;
 of genes with low p-values and then a relatively uniform/rectangular
@@ -924,25 +978,41 @@ samples per gene.</p>
 update_total_correct = function() {
   console.log("webex: update total_correct");
 
-  if (t = document.getElementById("webex-total_correct")) {
-    var correct = document.getElementsByClassName("webex-correct").length;
-    var solvemes = document.getElementsByClassName("webex-solveme").length;
-    var radiogroups = document.getElementsByClassName("webex-radiogroup").length;
-    var selects = document.getElementsByClassName("webex-select").length;
-    
-    t.innerHTML = correct + " of " + (solvemes + radiogroups + selects) + " correct";
+  var t = document.getElementsByClassName("webex-total_correct");
+  for (var i = 0; i < t.length; i++) {
+    p = t[i].parentElement;
+    var correct = p.getElementsByClassName("webex-correct").length;
+    var solvemes = p.getElementsByClassName("webex-solveme").length;
+    var radiogroups = p.getElementsByClassName("webex-radiogroup").length;
+    var selects = p.getElementsByClassName("webex-select").length;
+
+    t[i].innerHTML = correct + " of " + (solvemes + radiogroups + selects) + " correct";
   }
 }
 
 /* webex-solution button toggling function */
 b_func = function() {
   console.log("webex: toggle hide");
-  
+
   var cl = this.parentElement.classList;
   if (cl.contains('open')) {
     cl.remove("open");
   } else {
     cl.add("open");
+  }
+}
+
+/* check answers */
+check_func = function() {
+  console.log("webex: check answers");
+
+  var cl = this.parentElement.classList;
+  if (cl.contains('unchecked')) {
+    cl.remove("unchecked");
+    this.innerHTML = "Hide Answers";
+  } else {
+    cl.add("unchecked");
+    this.innerHTML = "Show Answers";
   }
 }
 
@@ -996,9 +1066,9 @@ solveme_func = function(e) {
 /* function for checking select answers */
 select_func = function(e) {
   console.log("webex: check select");
-  
+
   var cl = this.classList
-  
+
   /* add style */
   cl.remove("webex-incorrect");
   cl.remove("webex-correct");
@@ -1007,7 +1077,7 @@ select_func = function(e) {
   } else if (this.value != "blank") {
     cl.add("webex-incorrect");
   }
-  
+
   update_total_correct();
 }
 
@@ -1018,25 +1088,25 @@ radiogroups_func = function(e) {
   var checked_button = document.querySelector('input[name=' + this.id + ']:checked');
   var cl = checked_button.parentElement.classList;
   var labels = checked_button.parentElement.parentElement.children;
-  
+
   /* get rid of styles */
   for (i = 0; i < labels.length; i++) {
     labels[i].classList.remove("webex-incorrect");
     labels[i].classList.remove("webex-correct");
   }
-  
+
   /* add style */
   if (checked_button.value == "answer") {
     cl.add("webex-correct");
   } else {
     cl.add("webex-incorrect");
   }
-  
+
   update_total_correct();
 }
 
 window.onload = function() {
-  console.log("onload");
+  console.log("webex onload");
   /* set up solution buttons */
   var buttons = document.getElementsByTagName("button");
 
@@ -1044,6 +1114,22 @@ window.onload = function() {
     if (buttons[i].parentElement.classList.contains('webex-solution')) {
       buttons[i].onclick = b_func;
     }
+  }
+
+  var check_sections = document.getElementsByClassName("webex-check");
+  console.log("check:", check_sections.length);
+  for (var i = 0; i < check_sections.length; i++) {
+    check_sections[i].classList.add("unchecked");
+
+    let btn = document.createElement("button");
+    btn.innerHTML = "Show Answers";
+    btn.classList.add("webex-check-button");
+    btn.onclick = check_func;
+    check_sections[i].appendChild(btn);
+
+    let spn = document.createElement("span");
+    spn.classList.add("webex-total_correct");
+    check_sections[i].appendChild(spn);
   }
 
   /* set up webex-solveme inputs */
@@ -1071,18 +1157,21 @@ window.onload = function() {
     /* attach checking function */
     solveme[i].onkeyup = solveme_func;
     solveme[i].onchange = solveme_func;
+
+    solveme[i].insertAdjacentHTML("afterend", " <span class='webex-icon'></span>")
   }
-  
+
   /* set up radiogroups */
   var radiogroups = document.getElementsByClassName("webex-radiogroup");
   for (var i = 0; i < radiogroups.length; i++) {
     radiogroups[i].onchange = radiogroups_func;
   }
-  
+
   /* set up selects */
   var selects = document.getElementsByClassName("webex-select");
   for (var i = 0; i < selects.length; i++) {
     selects[i].onchange = select_func;
+    selects[i].insertAdjacentHTML("afterend", " <span class='webex-icon'></span>")
   }
 
   update_total_correct();

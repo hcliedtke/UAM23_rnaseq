@@ -1,11 +1,11 @@
 ---
 title: "Functional Enrichment"
 subtitle: | 
-  PoE23: Principles of Evolution
+  UAM23: New Technologies for Developmental Evolutionary Biology Studies
 author:
 - name: "H. Christoph Liedtke"
   affiliation: "Estación Biológica de Doñana"
-date: '2023-03-27'
+date: '2023-12-08'
 output: webexercises::webexercises_default
 editor_options: 
   chunk_output_type: console
@@ -15,7 +15,8 @@ editor_options:
 knitr::opts_chunk$set(echo = TRUE,
                       eval = FALSE,
                       message=FALSE,
-                      error=FALSE)
+                      error=FALSE,
+                      fig.width = 12)
 knitr::opts_knit$set(root.dir = '../')
 library("webexercises")
 ```
@@ -27,14 +28,13 @@ Set your working directory and load the libraries we need.
 
 ```{r eval=TRUE}
 # set working directory
-#setwd("~/Documents/git_projects/PoE23/")
-setwd("~/Documents/teaching/principals_of_evolution23/PoE23_rnaseq/")
+setwd("~/Documents/git_projects/UAM23_rnaseq/")
 
 # install pacman if not already installed
 if (!require("pacman")) install.packages("pacman")
 
 # use pacman to load libraries
-pacman::p_load(tidyverse,gprofiler2)
+pacman::p_load(tidyverse,gprofiler2, scico)
 
 ```
 
@@ -62,12 +62,12 @@ Let's load the results files we need.
 res<-readRDS("./results/deseq2_results.rds")
 
 # the annotations
-xtrop<-read_csv("./data/PCU23_annotations_xtr105.csv")
+xtrop<-read_csv("data/PCU23_annotations_xtr105_genes.csv")
 ```
 
 ## Prepare gene sets and background
 
-Ideally, the annotations of your genes should come from experimental evidence from your organism. If you work with mice, drosophila or humans for example, many functional enrichment analysis tools will be very easy to implement because they will automatically connect your lists of genes to annotations, background lists etc. This is unlikely going to exist if you work with non-model systems. We are therefore dependent on making our own annotations and lists.  
+Ideally, the annotations of your genes should come from experimental evidence from your organism. If you work with mice, _Drosophila_ or humans for example, many functional enrichment analysis tools will be very easy to implement because they will automatically connect your lists of genes to annotations, background lists etc. This is unlikely going to exist if you work with non-model systems. We are therefore dependent on making our own annotations and lists.  
 
 For our annotations, we are using BLAST results from querying our genes against the proteome of _Xenopus tropicalis_. This is a well studied frog species. It is still only distantly related to our focal species, but this is the best we can do. As we saw in the previous exercise, this results in many genes not having any annotations. These will be excluded unfortunately.
 
@@ -240,7 +240,7 @@ res_ora$result %>%
   ggplot(aes(x=GeneRatio, y=term_name)) +
   geom_point(aes(color=p_value, size=intersection_size)) +
   ylab("") +
-  scale_colour_viridis_c(direction = 1, option = "magma") +
+  scale_color_scico(palette = "batlow", direction = -1) +
   facet_grid(source~query,scales = "free_y",space = "free") +
   theme_bw()
 ```

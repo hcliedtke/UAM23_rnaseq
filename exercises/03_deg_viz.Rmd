@@ -1,11 +1,11 @@
 ---
 title: "Differential Gene Expression - Visualization"
 subtitle: | 
-  PoE23: Principles of Evolution
+  UAM23: New Technologies for Developmental Evolutionary Biology Studies
 author:
 - name: "H. Christoph Liedtke"
   affiliation: "Estación Biológica de Doñana"
-date: '2023-03-27'
+date: '2023-12-08'
 output: webexercises::webexercises_default
 editor_options: 
   chunk_output_type: console
@@ -15,7 +15,8 @@ editor_options:
 knitr::opts_chunk$set(echo = TRUE,
                       eval = FALSE,
                       message=FALSE,
-                      error=FALSE)
+                      error=FALSE,
+                      fig.width = 12)
 knitr::opts_knit$set(root.dir = '../')
 library("webexercises")
 ```
@@ -27,14 +28,13 @@ Set your working directory and load the libraries we will need.
 
 ```{r eval=TRUE}
 # set working directory
-#setwd("~/Documents/git_projects/PoE23/")
-setwd("~/Documents/teaching/principals_of_evolution23/PoE23_rnaseq/")
+setwd("~/Documents/git_projects/UAM23_rnaseq/")
 
 # install pacman if not already installed
 if (!require("pacman")) install.packages("pacman")
 
 # use pacman to load libraries
-pacman::p_load(tidyverse,DESeq2, ageglm,ggVennDiagram, UpSetR,plotly,ggrepel)
+pacman::p_load(tidyverse,DESeq2, ageglm,ggVennDiagram,UpSetR,plotly,ggrepel,scico)
 
 ```
 
@@ -42,7 +42,7 @@ pacman::p_load(tidyverse,DESeq2, ageglm,ggVennDiagram, UpSetR,plotly,ggrepel)
 
 In the last exercise, we performed a differential gene expression analysis with `DESeq2`. We contrasted dorsal and ventral skin tissues from tadpoles reared on light and dark backgrounds. We were finished up with `DESeqResults` objects for pair-wise comparisons. These we saved as a list.
   
-The aim of this exercise is to explore these results in greater detail. To do that, it would be good to know the functions of the genes in the Pelobates genome. One important extra file that you will use for this, is therefore an annotation file generated through BLASTing the genes against the Ensembl [*Xenopuss tropicalis*](http://www.ensembl.org/Xenopus_tropicalis/Info/Index) proteome. 
+The aim of this exercise is to explore these results in greater detail. To do that, it would be good to know the functions of the genes in the _Pelobates cultripes_ genome. One important extra file that you will use for this, is therefore an annotation file generated through BLASTing the genes against the Ensembl [*Xenopus tropicalis*](http://www.ensembl.org/Xenopus_tropicalis/Info/Index) proteome. 
 
 ## Load data
 
@@ -56,7 +56,7 @@ dds<-readRDS("./results/deseq2_dds.rds")
 res<-readRDS("./results/deseq2_results.rds")
 
 # Load BLAST results
-xtrop<-read_csv("./data/PCU23_annotations_xtr105.csv")
+xtrop<-read_csv("data/PCU23_annotations_xtr105_genes.csv")
 ```
 
 ### A comment on the annotation file
@@ -69,14 +69,6 @@ head(xtrop, 20)
 
 The annotation table has merged a couple of sources of information. The `gene_id`, `transcript_id` and `pep_id` are _Pelobates_-specific identifiers. These are reference IDs from the _Pelobates_ genome. The `pep_description` are annotations from that genome. The rest (starting with `xtr_`) are _Xenopus tropicalis_ peptide ids, names and descriptions. These have been derived from either a BLASTx or BLASTp search (using [diamond](https://github.com/bbuchfink/diamond)). We used the _Xenopus tropicalis_ Ensembl v105 proteome as a target for this search. These are therefore **homolog annotations**.   
   
-You should also be aware that the `gene_id` column does not contain unique identifiers. This is because the same gene can give rise to multiple transcripts. For now, we can load a second annotation file, where I have collapse these duplicates so that we have a gene-level annotation table.
-
-```{r}
-xtrop<-read_csv("data/PCU23_annotations_xtr105_genes.csv")
-head(xtrop, 20)
-```
-
-You can see here, for convenience, the Transcript IDs have been collapsed to have single lines per gene.
 
 ## Comparing sets
 
@@ -126,9 +118,9 @@ We can now plot this as a Venn diagram. Let's do this just with two sets, for th
 
 ```{r}
 # comparing just the dorsal vs. ventral
-ggVennDiagram(sig_deg[c("bD_bV","wD_wV")],
-              label_alpha = 0) +
-  scale_fill_gradient(low="blue",high = "gold")
+sig_deg[c("bD_bV","wD_wV")] %>%
+  ggVennDiagram(edge_size = 0) +
+  scale_fill_scico(palette = "batlow")
 ```
 
 
@@ -143,9 +135,8 @@ ggVennDiagram(sig_deg[c("bD_bV","wD_wV")],
 
 `r hide("Show Answer")`
 ```{r}
-ggVennDiagram(sig_deg,
-              label_alpha = 0) +
-  scale_fill_gradient(low="blue",high = "gold")
+ggVennDiagram(sig_deg,edge_size = 0) +
+  scale_fill_scico(palette = "batlow")
 ```
 
 * The largest shared set is still the Dorsal-Ventral comparisons of black and white tadpoles.
@@ -191,7 +182,7 @@ However, we want to squeeze as much information out of it as possible, so we wil
 * plot all comparisons together
 * make the plot interactive!
 
-```{r}
+```{r fig.height=12}
 gg_res <- res %>%
   lapply(as_tibble,rownames = "gene_id") %>%
   bind_rows(.id="comparison") %>%
@@ -260,7 +251,7 @@ res$bD_wD %>%
 
 Just some of the many answers:
 
-* Pigmentation changes involve melanosome biogeneis (pmel, oca2, mlana).
+* Pigmentation changes involve melanin biosynthesis (pmel, oca2, mlana).
 * It also involves carotenoids! (bco2l)
 * There are many differentially expressed genes which may be important, but they are not annotated.
 
