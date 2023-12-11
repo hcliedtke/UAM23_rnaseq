@@ -11,7 +11,7 @@ The practical sessions of this course will heavily rely on the `tidyverse` in R.
 ## Course Outline
 
 ### Introduction
-* _Lecture:_  [A Brief Word on Phenotypic Plasticity](./lectures/intro_DEG/index.html){:target="_blank"}. [20 mins]
+* _Lecture:_  [A Brief Word on Phenotypic Plasticity](./lectures/intro_PP/index.html){:target="_blank"}. [20 mins]
 * _Lecture:_  [Introduction to Practical](./lectures/intro_DEG/index.html){:target="_blank"}. [10 mins]
 
 ---
