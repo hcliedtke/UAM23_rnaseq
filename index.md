@@ -24,7 +24,7 @@ The practical sessions of this course will heavily rely on the `tidyverse` in R.
 * _Practical:_ [02 - Differential Gene Expression](./exercises/02_deg.html){:target="_blank"} [[Rmd](./exercises/02_deg.Rmd){:target="_blank"}] [[answers](./exercises/answers/02_deg.html){:target="_blank"}] [50 mins]
 
 * _Practical:_ [03 - DEG visualisation](./exercises/03_deg_viz.html){:target="_blank"} [[Rmd](./exercises/03_deg_viz.Rmd){:target="_blank"}] [[answers](./exercises/answers/03_deg_viz.html){:target="_blank"}] [30 mins]
-Di
+
 * _Practical:_ [04 - Functional Enrichment](./exercises/04_functional_enrichment.html){:target="_blank"} [[Rmd](./exercises/04_functional_enrichment.Rmd){:target="_blank"}] [[answers](./exercises/answers/04_functional_enrichment.html){:target="_blank"}] [50 mins]
 
 ---
